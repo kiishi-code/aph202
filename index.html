@@ -1,0 +1,634 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>APH 202 CBT - 5 Minutes</title>
+    <style>
+      body {
+        font-family: "Segoe UI", Tahoma, sans-serif;
+        background: linear-gradient(135deg, #1e3a8a, #3b82f6);
+        margin: 0;
+        padding: 0;
+        min-height: 100vh;
+        color: #333;
+      }
+      .container {
+        max-width: 720px;
+        margin: 15px auto;
+        background: white;
+        border-radius: 16px;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+        overflow: hidden;
+      }
+      header {
+        background: #1e3a8a;
+        color: white;
+        padding: 20px;
+        text-align: center;
+      }
+      .timer {
+        font-size: 2.2rem;
+        font-weight: bold;
+        text-align: center;
+        padding: 16px;
+        background: #1e3a8a;
+        color: white;
+        transition: all 0.4s;
+      }
+      .timer.warning {
+        background: #d32f2f;
+        color: white;
+      }
+      .progress {
+        height: 8px;
+        background: #3b82f6;
+        width: 0%;
+        transition: width 0.4s;
+      }
+
+      /* Blue & White Theme */
+      #startScreen {
+        background: linear-gradient(135deg, #1e3a8a, #3b82f6);
+        color: white;
+        padding: 40px 30px;
+        text-align: center;
+      }
+      #startScreen h2 {
+        color: white;
+        margin-bottom: 20px;
+      }
+      #startScreen p {
+        color: #e0f2ff;
+        margin: 15px 0 8px;
+        font-weight: 500;
+      }
+      #startScreen input[type="text"] {
+        width: 100%;
+        padding: 14px;
+        margin: 8px 0 15px;
+        border: 2px solid #fff;
+        border-radius: 8px;
+        font-size: 1.1rem;
+        background: rgba(255, 255, 255, 0.95);
+        color: #1e3a8a;
+      }
+
+      .question-container {
+        padding: 25px;
+      }
+      .question {
+        margin-bottom: 30px;
+        font-size: 1.1rem;
+        line-height: 1.6;
+      }
+      .options label {
+        display: block;
+        padding: 15px;
+        margin: 12px 0;
+        background: #f0f7ff;
+        border: 2px solid #1e3a8a;
+        border-radius: 10px;
+        cursor: pointer;
+      }
+      .options label:hover {
+        background: #e0f0ff;
+      }
+      .nav-buttons {
+        display: flex;
+        justify-content: space-between;
+        padding: 20px;
+        background: #f0f7ff;
+        gap: 12px;
+      }
+      button {
+        padding: 14px 24px;
+        border: none;
+        border-radius: 8px;
+        font-size: 1.1rem;
+        cursor: pointer;
+        flex: 1;
+      }
+      .btn-prev {
+        background: #64748b;
+        color: white;
+      }
+      .btn-next {
+        background: #1e3a8a;
+        color: white;
+      }
+      .result {
+        padding: 40px 30px;
+        display: none;
+        text-align: center;
+      }
+      .score {
+        font-size: 3.5rem;
+        font-weight: bold;
+        color: #1e3a8a;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <header>
+        <h1>APH 202 CBT</h1>
+        <p>Animal Husbandry • 30 Questions • 5 Minutes</p>
+      </header>
+      <div class="timer" id="timer">Time Left: 05:00</div>
+      <div class="progress" id="progress"></div>
+
+      <form
+        id="cbtForm"
+        action="https://api.web3forms.com/submit"
+        method="POST"
+      >
+        <input
+          type="hidden"
+          name="access_key"
+          value="064855e2-9965-4be4-b60a-1e61f4e9a0be"
+        />
+        <input type="hidden" name="subject" value="APH 202 CBT Result" />
+        <input type="hidden" name="to_email" value="ayoolaaa@funaab.edu.ng" />
+
+        <!-- Start Screen -->
+        <div id="startScreen">
+          <h2>Student Registration</h2>
+          <p><strong>Matric Number (Maximum 11 digits):</strong></p>
+          <input
+            type="text"
+            name="matric_number"
+            id="matric"
+            placeholder="e.g. 20201234567"
+            maxlength="11"
+            pattern="\d{1,11}"
+            required
+          />
+
+          <p><strong>Full Name:</strong></p>
+          <input
+            type="text"
+            name="name"
+            id="name"
+            placeholder="Enter your full name"
+            required
+          />
+
+          <button
+            type="button"
+            onclick="startTest()"
+            style="
+              background: white;
+              color: #1e3a8a;
+              padding: 16px;
+              font-size: 1.2rem;
+              width: 100%;
+              margin-top: 25px;
+              font-weight: bold;
+            "
+          >
+            Start Test
+          </button>
+        </div>
+
+        <!-- Quiz Area -->
+        <div id="quizArea" style="display: none">
+          <div class="question-container" id="quiz"></div>
+          <div class="nav-buttons">
+            <button type="button" class="btn-prev" id="prevBtn">
+              Previous
+            </button>
+            <button type="button" class="btn-next" id="nextBtn">Next</button>
+          </div>
+        </div>
+      </form>
+
+      <!-- Result Screen -->
+      <div id="resultScreen" class="result">
+        <h2>Test Completed!</h2>
+        <p class="score" id="scoreDisplay">0/30</p>
+        <p id="percentage" style="font-size: 1.6rem; color: #1e3a8a"></p>
+        <p><strong>Matric Number:</strong> <span id="resultMatric"></span></p>
+        <p><strong>Name:</strong> <span id="resultName"></span></p>
+        <p><strong>Time Taken:</strong> <span id="timeTaken"></span></p>
+        <button
+          onclick="location.reload()"
+          style="
+            background: #1e3a8a;
+            color: white;
+            padding: 14px 30px;
+            margin-top: 25px;
+            font-size: 1.1rem;
+          "
+        >
+          Retake Test
+        </button>
+      </div>
+    </div>
+
+    <script>
+      const originalQuestions = [
+        {
+          q: "Which of the following pairs is INCORRECTLY matched?",
+          options: [
+            "A. Goat – Caprine",
+            "B. Sheep – Ovine",
+            "C. Pig – Bovine",
+            "D. Horse – Equine",
+          ],
+          ans: "C",
+        },
+        {
+          q: "The actual expression of a character as influenced by genes and environment is known as:",
+          options: ["A. Gene", "B. Genotype", "C. Phenotype", "D. Breed"],
+          ans: "C",
+        },
+        {
+          q: "A yearling animal is one that:",
+          options: [
+            "A. Exactly one year old",
+            "B. Less than one year old",
+            "C. One year old but not yet two years old",
+            "D. More than two years old",
+          ],
+          ans: "C",
+        },
+        {
+          q: "Which term refers to a female twin born with a bull calf and is usually sterile?",
+          options: ["A. Heifer", "B. Dogie", "C. Freemartin", "D. Bullock"],
+          ans: "C",
+        },
+        {
+          q: "A dogie is best described as:",
+          options: [
+            "A. A sterile female calf",
+            "B. A motherless calf",
+            "C. A twin calf",
+            "D. A newborn calf",
+          ],
+          ans: "B",
+        },
+        {
+          q: "Which of the following is NOT a reproductive term?",
+          options: [
+            "A. Conception",
+            "B. Service",
+            "C. Gestation",
+            "D. Culling",
+          ],
+          ans: "D",
+        },
+        {
+          q: "The period from successful service to parturition is called:",
+          options: [
+            "A. Lactation period",
+            "B. Dry period",
+            "C. Gestation period",
+            "D. Calving interval",
+          ],
+          ans: "C",
+        },
+        {
+          q: "A cow differs from a heifer because a cow has:",
+          options: [
+            "A. Reached one year of age",
+            "B. Been mated",
+            "C. Calved at least once",
+            "D. Produced milk",
+          ],
+          ans: "C",
+        },
+        {
+          q: "Which of the following animals would most appropriately be described as a wether?",
+          options: [
+            "A. Castrated goat or sheep",
+            "B. Castrated pig only",
+            "C. Castrated rabbit only",
+            "D. Castrated horse only",
+          ],
+          ans: "A",
+        },
+        {
+          q: "A mature female pig that has never farrowed is called a:",
+          options: ["A. Sow", "B. Piglet", "C. Gilt", "D. Weaner"],
+          ans: "C",
+        },
+        {
+          q: "Which term is associated with rabbits and NOT goats?",
+          options: ["A. Buck", "B. Doe", "C. Kid", "D. Lapin"],
+          ans: "D",
+        },
+        {
+          q: "A colt is:",
+          options: [
+            "A. A young female horse",
+            "B. A castrated horse",
+            "C. A young male horse",
+            "D. A mature horse",
+          ],
+          ans: "C",
+        },
+        {
+          q: "Which pair is correctly matched?",
+          options: [
+            "A. Jenny – Male donkey",
+            "B. Jack – Female donkey",
+            "C. Hinny – Offspring of stallion and female donkey",
+            "D. Gelding – Young horse",
+          ],
+          ans: "C",
+        },
+        {
+          q: "Which poultry term refers specifically to a young male chicken?",
+          options: ["A. Pullet", "B. Cockerel", "C. Layer", "D. Broiler"],
+          ans: "B",
+        },
+        {
+          q: "A bird can be both a pullet and a layer at the same time:",
+          options: [
+            "A. Always true",
+            "B. Always false",
+            "C. True only after commencement of egg laying",
+            "D. True only before point of lay",
+          ],
+          ans: "C",
+        },
+        {
+          q: "The percentage of eggs set that develop embryos is:",
+          options: [
+            "A. Fertility",
+            "B. Hatchability",
+            "C. Brooding",
+            "D. Incubation",
+          ],
+          ans: "A",
+        },
+        {
+          q: "The percentage of eggs set that produce live chicks is:",
+          options: [
+            "A. Fertility",
+            "B. Hatchability",
+            "C. Brooding",
+            "D. Incubation",
+          ],
+          ans: "B",
+        },
+        {
+          q: "Which statement is CORRECT?",
+          options: [
+            "A. All fertile eggs hatch",
+            "B. All hatched eggs are fertile",
+            "C. Hatchability is always greater than fertility",
+            "D. Fertility equals hatchability in all cases",
+          ],
+          ans: "B",
+        },
+        {
+          q: "Which of the following animals is classified as a non-ruminant herbivore?",
+          options: ["A. Goat", "B. Sheep", "C. Rabbit", "D. Cattle"],
+          ans: "C",
+        },
+        {
+          q: "An animal fed ad-libitum:",
+          options: [
+            "A. Receives feed twice daily",
+            "B. Has unrestricted access to feed",
+            "C. Is force-fed",
+            "D. Receives concentrate only",
+          ],
+          ans: "B",
+        },
+        {
+          q: "Which indigenous Nigerian cattle breed is known for gigantic bulbous horns?",
+          options: ["A. Muturu", "B. White Fulani", "C. Kuri", "D. Ndama"],
+          ans: "C",
+        },
+        {
+          q: "Which indigenous cattle breed is the smallest and trypanotolerant?",
+          options: [
+            "A. Sokoto Gudali",
+            "B. Muturu",
+            "C. Kuri",
+            "D. White Fulani",
+          ],
+          ans: "B",
+        },
+        {
+          q: "The world's highest milk-producing dairy cattle breed is:",
+          options: [
+            "A. Jersey",
+            "B. Brown Swiss",
+            "C. Holstein Friesian",
+            "D. Ndama",
+          ],
+          ans: "C",
+        },
+        {
+          q: "Which goat breed is common in the humid forest zone of Southern Nigeria?",
+          options: [
+            "A. Sahel",
+            "B. Boer",
+            "C. Red Sokoto",
+            "D. West African Dwarf",
+          ],
+          ans: "D",
+        },
+        {
+          q: "The commonest sheep breed in Nigeria is:",
+          options: ["A. Balami", "B. Yankasa", "C. Uda", "D. Merino"],
+          ans: "B",
+        },
+        {
+          q: "A sheep with dark forequarters and white hindquarters is:",
+          options: [
+            "A. Balami",
+            "B. West African Dwarf",
+            "C. Uda",
+            "D. Yankasa",
+          ],
+          ans: "C",
+        },
+        {
+          q: "Which rabbit breed is used most widely for meat production?",
+          options: [
+            "A. Dutch",
+            "B. Chinchilla",
+            "C. Californian",
+            "D. New Zealand White",
+          ],
+          ans: "D",
+        },
+        {
+          q: "A rabbit that is white with black tips on the nose, ears, feet and tail is:",
+          options: [
+            "A. Dutch",
+            "B. Californian",
+            "C. New Zealand White",
+            "D. Chinchilla",
+          ],
+          ans: "B",
+        },
+        {
+          q: "The pig breed with the longest body and large floppy ears is:",
+          options: [
+            "A. Duroc",
+            "B. Large White",
+            "C. Landrace",
+            "D. Hampshire",
+          ],
+          ans: "C",
+        },
+        {
+          q: "Which statement is FALSE?",
+          options: [
+            "A. Bullock is a castrated male cattle",
+            "B. Barrow is a castrated male pig",
+            "C. Gelding is a castrated male horse",
+            "D. Stallion is a castrated male horse",
+          ],
+          ans: "D",
+        },
+      ];
+
+      let questions = [];
+      let currentQuestion = 0;
+      let answers = [];
+      let timerInterval;
+      let startTime;
+      let matricNumber = "";
+
+      function hasTakenTest(matric) {
+        return localStorage.getItem("aph202_taken_" + matric) === "true";
+      }
+
+      function markAsTaken(matric) {
+        localStorage.setItem("aph202_taken_" + matric, "true");
+      }
+
+      function startTest() {
+        const matricInput = document.getElementById("matric").value.trim();
+        const name = document.getElementById("name").value.trim();
+
+        if (
+          !matricInput ||
+          matricInput.length > 11 ||
+          !/^\d+$/.test(matricInput)
+        ) {
+          alert("Matric Number must be digits only and maximum 11 digits!");
+          return;
+        }
+        if (hasTakenTest(matricInput)) {
+          alert(
+            "This Matric Number has already taken the test.\nOnly one attempt is allowed.",
+          );
+          return;
+        }
+        if (!name) {
+          alert("Please enter your full name");
+          return;
+        }
+
+        matricNumber = matricInput;
+        questions = [...originalQuestions];
+        answers = new Array(questions.length).fill(null);
+
+        document.getElementById("startScreen").style.display = "none";
+        document.getElementById("quizArea").style.display = "block";
+
+        startTime = Date.now();
+        currentQuestion = 0;
+        renderQuestion();
+
+        let timeLeft = 300; // 5 minutes
+        timerInterval = setInterval(() => {
+          timeLeft--;
+          const min = Math.floor(timeLeft / 60);
+          const sec = timeLeft % 60;
+          const timerEl = document.getElementById("timer");
+          timerEl.textContent = `Time Left: ${min}:${sec < 10 ? "0" : ""}${sec}`;
+          if (timeLeft < 60) timerEl.classList.add("warning");
+          if (timeLeft <= 0) finalSubmit();
+        }, 1000);
+      }
+
+      function renderQuestion() {
+        const q = questions[currentQuestion];
+        let html = `<div class="question"><p><strong>${q.q}</strong></p><div class="options">`;
+        q.options.forEach((opt) => {
+          html += `<label><input type="radio" name="q${currentQuestion}" value="${opt[0]}"> ${opt}</label>`;
+        });
+        html += `</div></div>`;
+        document.getElementById("quiz").innerHTML = html;
+        document.getElementById("progress").style.width =
+          `${((currentQuestion + 1) / questions.length) * 100}%`;
+
+        document.getElementById("prevBtn").style.display =
+          currentQuestion === 0 ? "none" : "block";
+        document.getElementById("nextBtn").textContent =
+          currentQuestion === questions.length - 1 ? "Submit Test" : "Next";
+      }
+
+      function saveAnswer() {
+        const selected = document.querySelector(
+          `input[name="q${currentQuestion}"]:checked`,
+        );
+        if (selected) answers[currentQuestion] = selected.value;
+      }
+
+      document.getElementById("nextBtn").onclick = () => {
+        saveAnswer();
+        if (currentQuestion === questions.length - 1) {
+          finalSubmit();
+        } else {
+          currentQuestion++;
+          renderQuestion();
+        }
+      };
+
+      document.getElementById("prevBtn").onclick = () => {
+        saveAnswer();
+        if (currentQuestion > 0) {
+          currentQuestion--;
+          renderQuestion();
+        }
+      };
+
+      function finalSubmit() {
+        clearInterval(timerInterval);
+        saveAnswer();
+        const totalSeconds = Math.floor((Date.now() - startTime) / 1000);
+        const minTaken = Math.floor(totalSeconds / 60);
+        const secTaken = totalSeconds % 60;
+
+        let score = 0;
+        questions.forEach((q, i) => {
+          if (answers[i] === q.ans) score++;
+        });
+
+        const percentage = ((score / questions.length) * 100).toFixed(2);
+
+        markAsTaken(matricNumber);
+
+        document.getElementById("quizArea").style.display = "none";
+        document.getElementById("resultScreen").style.display = "block";
+
+        document.getElementById("scoreDisplay").textContent = `${score}/30`;
+        document.getElementById("percentage").textContent = `${percentage}%`;
+        document.getElementById("resultMatric").textContent = matricNumber;
+        document.getElementById("resultName").textContent =
+          document.getElementById("name").value;
+        document.getElementById("timeTaken").textContent =
+          `${minTaken} min ${secTaken} sec`;
+
+        const form = document.getElementById("cbtForm");
+        const scoreField = document.createElement("input");
+        scoreField.type = "hidden";
+        scoreField.name = "score";
+        scoreField.value = `${score}/30 (${percentage}%)`;
+        form.appendChild(scoreField);
+
+        setTimeout(() => form.submit(), 800);
+      }
+    </script>
+  </body>
+</html>
